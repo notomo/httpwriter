@@ -23,13 +23,14 @@ func (m *Memory) CreateBuffer(req *http.Request) *Buffer {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	b := &Buffer{}
+	b := &Buffer{Request: req}
 	m.Buffers = append(m.Buffers, b)
 	return b
 }
 
 type Buffer struct {
 	bytes.Buffer
+	Request *http.Request
 }
 
 func (b *Buffer) Close() error {

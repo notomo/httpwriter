@@ -32,16 +32,20 @@ func TestTransportWithMemory(t *testing.T) {
 	request(t, client, "/2")
 
 	{
-		got := memory.Buffers[0].String()
-		want := "/1\n"
-		if got != want {
+		b := memory.Buffers[0]
+		if got, want := b.String(), "/1\n"; got != want {
+			t.Errorf("want %q, but actual: %q", want, got)
+		}
+		if got, want := b.Request.URL.Path, "/1"; got != want {
 			t.Errorf("want %q, but actual: %q", want, got)
 		}
 	}
 	{
-		got := memory.Buffers[1].String()
-		want := "/2\n"
-		if got != want {
+		b := memory.Buffers[1]
+		if got, want := b.String(), "/2\n"; got != want {
+			t.Errorf("want %q, but actual: %q", want, got)
+		}
+		if got, want := b.Request.URL.Path, "/2"; got != want {
 			t.Errorf("want %q, but actual: %q", want, got)
 		}
 	}
