@@ -19,15 +19,17 @@ func ExampleDirectory() {
 
 	path := os.TempDir()
 	directory := httpwriter.Directory{Path: path}
-	logger := log.New(os.Stdout, "", 0)
 	client := http.Client{
 		Transport: &httpwriter.Transport{
-			Transport: TransportFunc(func(req *http.Request) (*http.Response, error) {
-				logger.Printf("-> %s", req.URL.Path)
-				return http.DefaultTransport.RoundTrip(req)
-			}),
+			TransportFactory: func(w io.Writer) http.RoundTripper {
+				logger := log.New(os.Stdout, "", 0)
+				logger.SetOutput(w)
+				return TransportFunc(func(req *http.Request) (*http.Response, error) {
+					logger.Printf("-> %s", req.URL.Path)
+					return http.DefaultTransport.RoundTrip(req)
+				})
+			},
 			GetWriter: httpwriter.MustDirectoryWriter(&directory),
-			SetWriter: logger.SetOutput,
 		},
 	}
 
@@ -62,15 +64,17 @@ func ExampleMemory() {
 	defer server.Close()
 
 	memory := httpwriter.Memory{}
-	logger := log.New(os.Stdout, "", 0)
 	client := http.Client{
 		Transport: &httpwriter.Transport{
-			Transport: TransportFunc(func(req *http.Request) (*http.Response, error) {
-				logger.Printf("-> %s", req.URL.Path)
-				return http.DefaultTransport.RoundTrip(req)
-			}),
+			TransportFactory: func(w io.Writer) http.RoundTripper {
+				logger := log.New(os.Stdout, "", 0)
+				logger.SetOutput(w)
+				return TransportFunc(func(req *http.Request) (*http.Response, error) {
+					logger.Printf("-> %s", req.URL.Path)
+					return http.DefaultTransport.RoundTrip(req)
+				})
+			},
 			GetWriter: httpwriter.NewMemoryWriter(&memory),
-			SetWriter: logger.SetOutput,
 		},
 	}
 

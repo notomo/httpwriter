@@ -6,9 +6,8 @@ import (
 )
 
 type Transport struct {
-	Transport http.RoundTripper
-	GetWriter func(*http.Request) (io.WriteCloser, error)
-	SetWriter func(io.Writer)
+	GetWriter        func(*http.Request) (io.WriteCloser, error)
+	TransportFactory func(io.Writer) http.RoundTripper
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -18,16 +17,10 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 	defer writer.Close()
 
-	if t.SetWriter != nil {
-		t.SetWriter(writer)
+	transport := t.TransportFactory(writer)
+	if transport == nil {
+		transport = http.DefaultTransport
 	}
 
-	return t.transport().RoundTrip(req)
-}
-
-func (t *Transport) transport() http.RoundTripper {
-	if t.Transport != nil {
-		return t.Transport
-	}
-	return http.DefaultTransport
+	return transport.RoundTrip(req)
 }

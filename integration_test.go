@@ -2,6 +2,7 @@ package httpwriter_test
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -16,15 +17,17 @@ func TestTransportWithMemory(t *testing.T) {
 	defer server.Close()
 
 	memory := httpwriter.Memory{}
-	logger := log.New(os.Stdout, "", 0)
 	client := http.Client{
 		Transport: &httpwriter.Transport{
-			Transport: TransportFunc(func(req *http.Request) (*http.Response, error) {
-				logger.Printf(req.URL.Path)
-				return http.DefaultTransport.RoundTrip(req)
-			}),
+			TransportFactory: func(w io.Writer) http.RoundTripper {
+				logger := log.New(os.Stdout, "", 0)
+				logger.SetOutput(w)
+				return TransportFunc(func(req *http.Request) (*http.Response, error) {
+					logger.Printf(req.URL.Path)
+					return http.DefaultTransport.RoundTrip(req)
+				})
+			},
 			GetWriter: httpwriter.NewMemoryWriter(&memory),
-			SetWriter: logger.SetOutput,
 		},
 	}
 
@@ -57,15 +60,17 @@ func TestTransportWithDirectory(t *testing.T) {
 
 	path := t.TempDir()
 	directory := httpwriter.Directory{Path: path}
-	logger := log.New(os.Stdout, "", 0)
 	client := http.Client{
 		Transport: &httpwriter.Transport{
-			Transport: TransportFunc(func(req *http.Request) (*http.Response, error) {
-				logger.Printf(req.URL.Path)
-				return http.DefaultTransport.RoundTrip(req)
-			}),
+			TransportFactory: func(w io.Writer) http.RoundTripper {
+				logger := log.New(os.Stdout, "", 0)
+				logger.SetOutput(w)
+				return TransportFunc(func(req *http.Request) (*http.Response, error) {
+					logger.Printf(req.URL.Path)
+					return http.DefaultTransport.RoundTrip(req)
+				})
+			},
 			GetWriter: httpwriter.MustDirectoryWriter(&directory),
-			SetWriter: logger.SetOutput,
 		},
 	}
 
